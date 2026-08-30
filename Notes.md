@@ -4,20 +4,24 @@ Nu ska vi försöka bygga en drönare med en egen flight controller <!-- Jättek
 ## Project idea (Updated 2026-08-31)
 A small radio controlled quadrocopter drone based of a Paspberry Pi Pico running the flight controller. A IMU "Inertial Measurement Unit" accounts for spatial context and the motors is controlled by PWM "Pulse Width Modulation" in a PID loop for stable flight. The rest will just work out.
 
-WIP - Work In Progress
+> WIP - Work In Progress
 
-TBC - To Be Continued
+> TBC - To Be Continued
 
-TBD - To Be Done
+> TBD - To Be Done
+
+> IGU - I Gave Up
 
 
 ## Features
 ### Orientational Awareness
-* Roll/Pitch Estimation - WIP
+    Roll/Pitch Estimation - WIP
+    * IMU Sensor Readings - Done  
+    * Accelerometer/Gyroscope Complimentary Filter (Pitch/Roll) - Done
 ### Stable Flight
-* PID Controlls - TBD
+    PID Controlls - TBD
 ### Remote Controll
-* ExpressLRS Radio Communication - TBD
+    ExpressLRS Radio Communication - TBD
 
 ## Hardware (BIM-ish)
 ### MCU
