@@ -1,184 +1,18 @@
+// ---- RP2040 Flight Controller ----
 #include <Arduino.h>
-
-#include "FlightController.h"
-
 #include <SPI.h>
 #include <math.h>
-#include <time.h>
-#include <stdio.h>
+#include "VectorMath.h"
+#include "IMU.h"
 
 // ---- Pin Definitions ----
 const int CS_PIN = 17; // GP17
 const int LED_PIN = 20; // GP20
 const int Button_PIN = 21; // GP21
 
+// ---- IMU constants ----
 const byte PWR_MGMT_1 = 0x6B;
 const byte ACCEL_XOUT_H = 0x3B;
-
-const float ACCEL_SCALE = 16384.0 / 9.82; // 1g = 9.82 m/s^2, 16384 LSB/g for ±2g range
-const float GYRO_SCALE = 131.0 / (PI / 180.0); // 1°/s = π/180 rad/s, 131 LSB/(°/s) for ±250°/s range
-const float TEMP_SCALE = 340.0;
-
-
-// ---- Vector and Matrix structures for 3D transformations ----
-// 3D vector structure
-struct Vector3 {
-  float x, y, z;
-};
-// 3x3 Matrix for 3D transformations
-struct Matrix3x3 {
-  float m[3][3]; 
-};
-// 3D vector - 3D vector:
-// 3D vector subtraction
-Vector3 operator-(const Vector3& a, const Vector3& b) {
-  return {a.x - b.x, a.y - b.y, a.z - b.z};
-}
-// 3D vector addition
-Vector3 operator+(const Vector3& a, const Vector3& b) {
-  return {a.x + b.x, a.y + b.y, a.z + b.z};
-}
-// 3D vector - scalar (float):
-// 3D vector multiplied by a scalar (float)
-Vector3 operator*(const Vector3& vec, float scalar) {
-  return {vec.x * scalar, vec.y * scalar, vec.z * scalar};
-}
-// 3D vector - 3x3 matrix:
-// 3D vector multiplication with a 3x3 matrix
-Vector3 operator*(const Matrix3x3& mat, const Vector3& vec) {
-  Vector3 result;
-  // row1 * (x, y, z)
-  result.x = (mat.m[0][0] * vec.x) + (mat.m[0][1] * vec.y) + (mat.m[0][2] * vec.z);
-  // row2 * (x, y, z)
-  result.y = (mat.m[1][0] * vec.x) + (mat.m[1][1] * vec.y) + (mat.m[1][2] * vec.z);
-  // row3 * (x, y, z)
-  result.z = (mat.m[2][0] * vec.x) + (mat.m[2][1] * vec.y) + (mat.m[2][2] * vec.z);
-  return result;
-}
-// Common operations for 3D vectors:
-// Dot product (How much vector_a goes in the direction of vector_b)
-float dot(const Vector3& a, const Vector3& b) {
-  return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
-}
-// Cross product (Vector orthogonal to vector_a and vector_b)
-Vector3 cross(const Vector3& a, const Vector3& b) {
-  return {
-    (a.y * b.z) - (a.z * b.y),
-    (a.z * b.x) - (a.x * b.z),
-    (a.x * b.y) - (a.y * b.x)
-  };
-}
-// Distance between two 3D positonal vectors (Euclidean distance)
-float eucledianDistance(const Vector3& a, const Vector3& b) {
-  return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2) + pow(a.z - b.z, 2));
-}
-// Magnitude/Length
-float magnitude(const Vector3& vec) {
-  return sqrt(pow(vec.x, 2) + pow(vec.y, 2) + pow(vec.z, 2));
-}
-
-// ---- MPU Data Structures ----
-struct MPUstruct {
-  Vector3 accel;
-  Vector3 gyro;
-};
-struct CalibrationOffsetsMPU {
-  Vector3 accel;
-  Vector3 gyro;
-};
-
-// Send data to register magic
-void writeRegister(byte reg, byte data) {
-  digitalWrite(CS_PIN, LOW);
-  SPI.transfer(reg);
-  SPI.transfer(data);
-  digitalWrite(CS_PIN, HIGH);
-}
-
-MPUstruct readMPU(CalibrationOffsetsMPU &MPU_Offsets) {
-  digitalWrite(CS_PIN, LOW);
-  SPI.transfer(ACCEL_XOUT_H | 0x80); // Läs ut accelerometerdata (MSB först)
-
-  int16_t rawAccelX = (SPI.transfer(0x00) << 8) | SPI.transfer(0x00);
-  int16_t rawAccelY = (SPI.transfer(0x00) << 8) | SPI.transfer(0x00);
-  int16_t rawAccelZ = (SPI.transfer(0x00) << 8) | SPI.transfer(0x00);
-
-  int16_t readRawTemp = (SPI.transfer(0x00) << 8) | SPI.transfer(0x00); // 
-
-  int16_t rawGyroX = (SPI.transfer(0x00) << 8) | SPI.transfer(0x00);
-  int16_t rawGyroY = (SPI.transfer(0x00) << 8) | SPI.transfer(0x00);
-  int16_t rawGyroZ = (SPI.transfer(0x00) << 8) | SPI.transfer(0x00);
-  digitalWrite(CS_PIN, HIGH);
-
-  // Translate raw values to actual values (float)
-  float accelX = (rawAccelX / ACCEL_SCALE) - MPU_Offsets.accel.x;
-  float accelY = (rawAccelY / ACCEL_SCALE) - MPU_Offsets.accel.y;
-  float accelZ = (rawAccelZ / ACCEL_SCALE) - MPU_Offsets.accel.z;
-  float gyroX = (rawGyroX / GYRO_SCALE) - MPU_Offsets.gyro.x;
-  float gyroY = (rawGyroY / GYRO_SCALE) - MPU_Offsets.gyro.y;
-  float gyroZ = (rawGyroZ / GYRO_SCALE) - MPU_Offsets.gyro.z;
-
-  return {Vector3{accelX, accelY, accelZ}, Vector3{gyroX, gyroY, gyroZ}};
-}
-
-void callibMPU(CalibrationOffsetsMPU &offsets) {
-  // Kalibrera accelerometern
-  offsets = {Vector3{0, 0, 0}, Vector3{0, 0, 0}};
-  delay(500); // Debounce delay (prevents calibrating for vibrations when the button is pressed)
-
-  // Rolling average - more stable measurements
-  MPUstruct base = {Vector3{0,0,0}, Vector3{0,0,0}}; // Zero basevalues
-  int numSamples = 200;
-  for (int i = 0; i < numSamples; i++) {
-    MPUstruct temp = readMPU(offsets);
-    base.accel = base.accel + temp.accel;
-    base.gyro = base.gyro + temp.gyro;
-    delay(10);
-  }
-  base.accel = base.accel * (1.0 / numSamples);
-  base.gyro = base.gyro * (1.0 / numSamples);
-
-  // Spara ner de nya värdena som offsets.
-  float gravity = 9.82; // Assume 9.82m/s for gravity
-  offsets.accel.x = base.accel.x;
-  offsets.accel.y = base.accel.y;
-  offsets.accel.z = base.accel.z - gravity;
-  
-  offsets.gyro.x = base.gyro.x;
-  offsets.gyro.y = base.gyro.y;
-  offsets.gyro.z = base.gyro.z;
-}
-
-// ---- Orientation and Translation Vectors ----
-// (-, pitch, roll) from accelerometer and gyroscope data
-Vector3 MCUyprOrientation(const Vector3& accel, const Vector3& gyro, float dt) {
-  // Calculate roll and pitch from accelerometer
-  //static float yaw = 0; // PLACEHOLDER
-  static float pitch = 0;
-  static float roll = 0;
-
-  // Accelerometer angles (rad)
-  float accPitch = atan2(-accel.x, sqrt(accel.y * accel.y + accel.z * accel.z));
-  float accRoll = atan2(accel.y, accel.z);
-
-  // Gyroscope rates (rad/s)
-  float gyroRoll = gyro.x;
-  float gyroPitch = gyro.y;
-
-  // <3 komplementärfiltret <3
-  float TrustFactor = 5.0; // Multiply trust on the accelerometer data
-  dt = dt * TrustFactor;
-  pitch = (1-dt) * (pitch + (gyroPitch * dt)) + dt * accPitch;
-  roll  = (1-dt) * (roll + (gyroRoll * dt)) + dt * accRoll;
-
-  return {0.0, pitch, roll}; // Yaw is not included
-}
-Vector3 MCUxyzTranslation(const Vector3& accel, const Vector3& gyro, float dt) {
-  // Placeholder function for translation vector calculation
-  // This would typically involve integrating the accelerometer data over time
-  // and applying any necessary corrections for drift and orientation.
-  return {0.0, 0.0, 0.0}; // Placeholder return value
-}
 
 // ---- Arduino Setup and Loop ----
 void setup() {
@@ -192,7 +26,7 @@ void setup() {
 
   delay(100); // Wait for hardware to stabilize
 
-  writeRegister(PWR_MGMT_1, 0x00); // Väck MCU!
+  writeRegister(PWR_MGMT_1, 0x00); // Väck IMU!
   delay(100);
 }
 
@@ -204,16 +38,16 @@ void loop() {
   float dt = (currentTime - lastTime) / 1000000.0f; // us to s
   lastTime = currentTime;
 
-  // Make MCU offsets static to survive loop iterations
-  static CalibrationOffsetsMPU MPU_Offsets;
+  // Make IMU offsets static to survive loop iterations
+  static CalibrationOffsetsIMU IMU_Offsets;
 
 
-  // Read MCU data
-  MPUstruct data = readMPU(MPU_Offsets);
+  // Read IMU data
+  IMUstruct data = readIMU(IMU_Offsets);
   Vector3 accel = data.accel;
   Vector3 gyro = data.gyro;
-  Vector3 orientation = MCUyprOrientation(accel, gyro, dt);
-  Vector3 translation = MCUxyzTranslation(accel, gyro, dt); // INTE KLAR
+  Vector3 orientation = IMUyprOrientation(accel, gyro, dt);
+  Vector3 translation = IMUxyzTranslation(accel, gyro, dt); // INTE KLAR
 
   // Print accelerometer and gyroscope data to the serial monitor
   char buffer[64];
@@ -221,11 +55,8 @@ void loop() {
   //Serial.print(buffer);
   snprintf(buffer, sizeof(buffer), "Accel: (%.4f,  %.4f,  %.4f)\n", accel.x, accel.y, accel.z);
   //Serial.print(buffer);
-  snprintf(buffer, sizeof(buffer), "Orientation: (-NIL-,  %.4f,  %.4f) (-NIL-, pitch, roll)\n", orientation.y, orientation.z);
+  snprintf(buffer, sizeof(buffer), "Pitch: %.4f   Roll: %.4f\n", orientation.y, orientation.z);
   Serial.print(buffer);
-  snprintf(buffer, sizeof(buffer), "Translation: (%.4f,  %.4f,  %.4f) (x, y, z)\n", translation.x, translation.y, translation.z);
-  //Serial.print(buffer);
-  //Serial.println("Loop time: " + String(dt * 1000.0f) + " ms");
 
   // 
   if (accel.z < 0) {
@@ -234,8 +65,8 @@ void loop() {
     digitalWrite(LED_PIN, LOW);
   }
   if (digitalRead(Button_PIN) == LOW) {
-    Serial.println("Callibrating MPU...");
-    callibMPU(MPU_Offsets);
+    Serial.println("Callibrating IMU...");
+    callibIMU(IMU_Offsets);
   }
 
   //delay(500);

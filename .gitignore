@@ -1,0 +1,10 @@
+# Arduino / PlatformIO
+.pio/
+.vscode/
+include/
+lib/
+*.o
+*.elf
+*.bin
+*.hex
+build/
