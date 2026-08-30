@@ -150,26 +150,34 @@ void callibMPU(CalibrationOffsetsMPU &offsets) {
 }
 
 // ---- Orientation and Translation Vectors ----
-// (yaw, pitch, roll) from accelerometer and gyroscope data
-float MCUAccRoll(const Vector3& accel) {
-  float roll = atan2(accel.y, accel.z);
-  return roll;
-}
-float MCUAccPitch(const Vector3& accel) {
-  float pitch = atan2(-accel.x, sqrt(accel.y * accel.y + accel.z * accel.z));
-  return pitch;
-}
-Vector3 MCUyprOrientation(const Vector3& accel, const Vector3& gyro) {
+// (-, pitch, roll) from accelerometer and gyroscope data
+Vector3 MCUyprOrientation(const Vector3& accel, const Vector3& gyro, float dt) {
   // Calculate roll and pitch from accelerometer
-  float yaw = 0; // Placeholder for yaw calculation
-  float pitch = MCUAccPitch(accel);
-  float roll = MCUAccRoll(accel);
+  //static float yaw = 0; // PLACEHOLDER
+  static float pitch = 0;
+  static float roll = 0;
 
-  // Integrate gyroscope data to get orientation
-  //roll += gyro.x * dt;
-  //pitch += gyro.y * dt;
+  // Accelerometer angles (rad)
+  float accPitch = atan2(-accel.x, sqrt(accel.y * accel.y + accel.z * accel.z));
+  float accRoll = atan2(accel.y, accel.z);
 
-  return {roll, pitch, 0}; // Yaw is not calculated here
+  // Gyroscope rates (rad/s)
+  float gyroRoll = gyro.x;
+  float gyroPitch = gyro.y;
+
+  // <3 komplementärfiltret <3
+  float TrustFactor = 5.0; // Multiply trust on the accelerometer data
+  dt = dt * TrustFactor;
+  pitch = (1-dt) * (pitch + (gyroPitch * dt)) + dt * accPitch;
+  roll  = (1-dt) * (roll + (gyroRoll * dt)) + dt * accRoll;
+
+  return {0.0, pitch, roll}; // Yaw is not included
+}
+Vector3 MCUxyzTranslation(const Vector3& accel, const Vector3& gyro, float dt) {
+  // Placeholder function for translation vector calculation
+  // This would typically involve integrating the accelerometer data over time
+  // and applying any necessary corrections for drift and orientation.
+  return {0.0, 0.0, 0.0}; // Placeholder return value
 }
 
 // ---- Arduino Setup and Loop ----
@@ -189,22 +197,35 @@ void setup() {
 }
 
 void loop() {
+  // Loop-time (dt) calculation
+  static unsigned long lastTime = 0;
+  unsigned long currentTime = micros();
+  if (lastTime == 0) lastTime = currentTime; 
+  float dt = (currentTime - lastTime) / 1000000.0f; // us to s
+  lastTime = currentTime;
+
   // Make MCU offsets static to survive loop iterations
   static CalibrationOffsetsMPU MPU_Offsets;
+
 
   // Read MCU data
   MPUstruct data = readMPU(MPU_Offsets);
   Vector3 accel = data.accel;
   Vector3 gyro = data.gyro;
-  Vector3 orientation = MCUyprOrientation(accel, gyro); // NÄSTAN KLAR
-  Vector3 translation = {0, 0, 0}; // INTE KLAR
+  Vector3 orientation = MCUyprOrientation(accel, gyro, dt);
+  Vector3 translation = MCUxyzTranslation(accel, gyro, dt); // INTE KLAR
 
   // Print accelerometer and gyroscope data to the serial monitor
   char buffer[64];
   snprintf(buffer, sizeof(buffer), "Gyro:  (%.4f,  %.4f,  %.4f)\n", gyro.x, gyro.y, gyro.z);
-  Serial.print(buffer);
+  //Serial.print(buffer);
   snprintf(buffer, sizeof(buffer), "Accel: (%.4f,  %.4f,  %.4f)\n", accel.x, accel.y, accel.z);
+  //Serial.print(buffer);
+  snprintf(buffer, sizeof(buffer), "Orientation: (-NIL-,  %.4f,  %.4f) (-NIL-, pitch, roll)\n", orientation.y, orientation.z);
   Serial.print(buffer);
+  snprintf(buffer, sizeof(buffer), "Translation: (%.4f,  %.4f,  %.4f) (x, y, z)\n", translation.x, translation.y, translation.z);
+  //Serial.print(buffer);
+  //Serial.println("Loop time: " + String(dt * 1000.0f) + " ms");
 
   // 
   if (accel.z < 0) {
@@ -217,5 +238,5 @@ void loop() {
     callibMPU(MPU_Offsets);
   }
 
-  delay(250);
+  //delay(500);
 }
