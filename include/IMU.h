@@ -2,9 +2,8 @@
 #ifndef IMU_H
 #define IMU_H
 
-#include <SPI.h>
-#include <math.h>
-#include "VectorMath.h" // <-- Denna MÅSTE ligga här uppe!
+// ---- Pin Definitions ----
+extern const int CS_PIN; // GP17
 
 // IMU scalars
 const float ACCEL_SCALE = 16384.0 / 9.82; // 1g = 9.82 m/s^2, 16384 LSB/g for ±2g range

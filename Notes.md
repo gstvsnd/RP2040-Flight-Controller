@@ -18,12 +18,14 @@ A small radio controlled quadrocopter drone based of a Paspberry Pi Pico running
     Roll/Pitch Estimation - WIP
     * IMU Sensor Readings - Done  
     * Accelerometer/Gyroscope Complimentary Filter (Pitch/Roll) - Done
+### Rotational Callibration
+    Rotational callibration matrix - TBD
 ### Stable Flight
     PID Controlls - TBD
 ### Remote Controll
     ExpressLRS Radio Communication - TBD
 
-## Hardware (BIM-ish)
+## Hardware (BOM-ish)
 ### MCU
 * Raspberry Pi Pico 2040 - TBC
 ### IMU

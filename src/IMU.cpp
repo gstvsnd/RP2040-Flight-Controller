@@ -1,8 +1,8 @@
 // IMU.cpp
+#include <SPI.h>
+#include <math.h>
+#include "VectorMath.h"
 #include "IMU.h"
-
-// ---- Pin Definitions ----
-extern const int CS_PIN = 17; // GP17
 
 // ---- IMU constants ----
 const byte PWR_MGMT_1 = 0x6B;
@@ -62,7 +62,7 @@ void callibIMU(CalibrationOffsetsIMU &offsets) {
   float gravity = 9.82; // Assume 9.82m/s for gravity
   offsets.accel.x = base.accel.x;
   offsets.accel.y = base.accel.y;
-  offsets.accel.z = base.accel.z - gravity;
+  offsets.accel.z = base.accel.z + gravity;
   
   offsets.gyro.x = base.gyro.x;
   offsets.gyro.y = base.gyro.y;
