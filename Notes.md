@@ -10,16 +10,17 @@ A small radio controlled quadrocopter drone based of a Paspberry Pi Pico running
 
 > TBD - To Be Done
 
-> IGU - I Gave Up
+> TND - To Not Do
 
 
 ## Features
 ### Orientational Awareness
     Roll/Pitch Estimation - WIP
-    * IMU Sensor Readings - Done  
-    * Accelerometer/Gyroscope Complimentary Filter (Pitch/Roll) - Done
-### Rotational Callibration
-    Rotational callibration matrix - TBD
+    IMU Sensor Readings - Done  
+    Accelerometer/Gyroscope Complimentary Filter (Pitch/Roll) - Done (can be improved)
+### Callibration
+    
+    Rotational callibration matrix - Done
 ### Stable Flight
     PID Controlls - TBD
 ### Remote Controll

@@ -25,5 +25,8 @@ float dot(const Vector3& a, const Vector3& b);
 Vector3 cross(const Vector3& a, const Vector3& b);
 float eucledianDistance(const Vector3& a, const Vector3& b);
 float magnitude(const Vector3& vec);
+Vector3 normalize(const Vector3& vec);
+Matrix3x3 transpose(const Matrix3x3& matrix);
+
 
 #endif // VECTOR_MATH_H

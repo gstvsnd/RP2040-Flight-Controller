@@ -16,7 +16,7 @@ void writeRegister(byte reg, byte data) {
   digitalWrite(CS_PIN, HIGH);
 }
 // Read IMU data and apply calibration offsets
-IMUstruct readIMU(CalibrationOffsetsIMU &IMU_Offsets) {
+IMUstruct readIMU(IMUCalibrationData &calibrationData) {
   digitalWrite(CS_PIN, LOW);
   SPI.transfer(ACCEL_XOUT_H | 0x80); // Läs ut accelerometerdata (MSB först)
 
@@ -32,41 +32,74 @@ IMUstruct readIMU(CalibrationOffsetsIMU &IMU_Offsets) {
   digitalWrite(CS_PIN, HIGH);
 
   // Translate raw values to actual values (float)
-  float accelX = (rawAccelX / ACCEL_SCALE) - IMU_Offsets.accel.x;
-  float accelY = (rawAccelY / ACCEL_SCALE) - IMU_Offsets.accel.y;
-  float accelZ = (rawAccelZ / ACCEL_SCALE) - IMU_Offsets.accel.z;
-  float gyroX = (rawGyroX / GYRO_SCALE) - IMU_Offsets.gyro.x;
-  float gyroY = (rawGyroY / GYRO_SCALE) - IMU_Offsets.gyro.y;
-  float gyroZ = (rawGyroZ / GYRO_SCALE) - IMU_Offsets.gyro.z;
+  float accelX = (rawAccelX / ACCEL_SCALE) - calibrationData.accel.x;
+  float accelY = (rawAccelY / ACCEL_SCALE) - calibrationData.accel.y;
+  float accelZ = (rawAccelZ / ACCEL_SCALE) - calibrationData.accel.z;
 
-  return {Vector3{accelX, accelY, accelZ}, Vector3{gyroX, gyroY, gyroZ}};
+  float gyroX = (rawGyroX / GYRO_SCALE) - calibrationData.gyro.x;
+  float gyroY = (rawGyroY / GYRO_SCALE) - calibrationData.gyro.y;
+  float gyroZ = (rawGyroZ / GYRO_SCALE) - calibrationData.gyro.z;
+
+  Vector3 accel = {accelX, accelY, accelZ};
+  Vector3 gyro = {gyroX, gyroY, gyroZ};
+
+  // Alow drone developer to mount IMU in any orientation:
+  accel = calibrationData.R * accel;
+  gyro = calibrationData.R * gyro;
+
+  return {accel, gyro};
 }
-void callibIMU(CalibrationOffsetsIMU &offsets) {
-  // Kalibrera accelerometern
-  offsets = {Vector3{0, 0, 0}, Vector3{0, 0, 0}};
-  delay(500); // Debounce delay (prevents calibrating for vibrations when the button is pressed)
-
-  // Rolling average - more stable measurements
+void callibIMU(IMUCalibrationData &calibrationData) {
+  // Callibrate IMU
+  calibrationData = {Vector3{0, 0, 0}, Vector3{0, 0, 0}, Matrix3x3{{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}}}; // Reset offsets for new callibration
+  
+  // Estimate current accelereration - Rolling average
   IMUstruct base = {Vector3{0,0,0}, Vector3{0,0,0}}; // Zero basevalues
   int numSamples = 200;
   for (int i = 0; i < numSamples; i++) {
-    IMUstruct temp = readIMU(offsets);
+    IMUstruct temp = readIMU(calibrationData);
     base.accel = base.accel + temp.accel;
     base.gyro = base.gyro + temp.gyro;
     delay(10);
   }
   base.accel = base.accel * (1.0 / numSamples);
   base.gyro = base.gyro * (1.0 / numSamples);
-
-  // Spara ner de nya värdena som offsets.
-  float gravity = 9.82; // Assume 9.82m/s for gravity
-  offsets.accel.x = base.accel.x;
-  offsets.accel.y = base.accel.y;
-  offsets.accel.z = base.accel.z + gravity;
   
-  offsets.gyro.x = base.gyro.x;
-  offsets.gyro.y = base.gyro.y;
-  offsets.gyro.z = base.gyro.z;
+  const float g = 9.82; // Gravity constant (m/s^2)
+
+  Matrix3x3 R;
+  Vector3 ideal_accel = {0.0f, 0.0f, -g};
+  Vector3 norm_base = normalize(base.accel);
+  Vector3 norm_ideal = normalize(ideal_accel);
+  Vector3 axis = normalize(cross(norm_base, norm_ideal));
+
+  float cosTheta = dot(norm_base, norm_ideal);
+  float sinTheta = sqrt(1.0f - (cosTheta * cosTheta));
+  float v = 1.0f - cosTheta;
+
+  R.m[0][0] = cosTheta + (axis.x * axis.x * v);
+  R.m[0][1] = (axis.x * axis.y * v) - (axis.z * sinTheta);
+  R.m[0][2] = (axis.x * axis.z * v) + (axis.y * sinTheta);
+  
+  R.m[1][0] = (axis.y * axis.x * v) + (axis.z * sinTheta);
+  R.m[1][1] = cosTheta + (axis.y * axis.y * v);
+  R.m[1][2] = (axis.y * axis.z * v) - (axis.x * sinTheta);
+  
+  R.m[2][0] = (axis.z * axis.x * v) - (axis.y * sinTheta);
+  R.m[2][1] = (axis.z * axis.y * v) + (axis.x * sinTheta);
+  R.m[2][2] = cosTheta + (axis.z * axis.z * v);
+
+  // Rotational correction:
+  calibrationData.R = R; 
+
+  // Accelerometer drift compensation (with rotational correction):
+  Vector3 accel_offset = (R * base.accel) - ideal_accel;
+  calibrationData.accel = transpose(R) * accel_offset;
+
+  // Angular drift compensation:
+  calibrationData.gyro.x = base.gyro.x;
+  calibrationData.gyro.y = base.gyro.y;
+  calibrationData.gyro.z = base.gyro.z;
 }
 // ---- Orientation and Translation Vectors ----
 // (-, pitch, roll) from accelerometer and gyroscope data

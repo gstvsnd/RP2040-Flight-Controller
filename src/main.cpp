@@ -8,11 +8,13 @@
 // ---- Pin Definitions ----
 const int CS_PIN = 17; // GP17
 const int LED_PIN = 20; // GP20
-const int Button_PIN = 21; // GP21
+const int motor_PIN = 22; // GP22
 
-// ---- IMU constants ----
+// ---- IMU constants (memory addresses) ----
 const byte PWR_MGMT_1 = 0x6B;
 const byte ACCEL_XOUT_H = 0x3B;
+
+int worthless_integer = 0;
 
 // ---- Arduino Setup and Loop ----
 void setup() {
@@ -21,13 +23,16 @@ void setup() {
   pinMode(CS_PIN, OUTPUT);
   digitalWrite(CS_PIN, HIGH);
   pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);
-  pinMode(Button_PIN, INPUT_PULLUP);
+  digitalWrite(LED_PIN, HIGH);
+  pinMode(motor_PIN, OUTPUT);
+  digitalWrite(motor_PIN, LOW);
 
   delay(100); // Wait for hardware to stabilize
 
   writeRegister(PWR_MGMT_1, 0x00); // Väck IMU!
-  delay(100);
+  
+  Serial.println("--- Setup complete ---");
+  digitalWrite(LED_PIN, LOW);
 }
 
 void loop() {
@@ -39,11 +44,20 @@ void loop() {
   lastTime = currentTime;
 
   // Make IMU offsets static to survive loop iterations
-  static CalibrationOffsetsIMU IMU_Offsets;
+  static IMUCalibrationData calibrationData;
+  if (worthless_integer == 0) {
+    digitalWrite(LED_PIN, HIGH);
+    delay(2000);
+    Serial.print("Callibrating IMU...\n");
+    callibIMU(calibrationData);
 
+    worthless_integer = 1;
+    Serial.print("--- Setup complete ---\n");
+    digitalWrite(LED_PIN, LOW);
+  }
 
   // Read IMU data
-  IMUstruct data = readIMU(IMU_Offsets);
+  IMUstruct data = readIMU(calibrationData);
   Vector3 accel = data.accel;
   Vector3 gyro = data.gyro;
   Vector3 orientation = IMUyprOrientation(accel, gyro, dt);
@@ -54,20 +68,17 @@ void loop() {
   snprintf(buffer, sizeof(buffer), "Gyro:  (%.4f,  %.4f,  %.4f)\n", gyro.x, gyro.y, gyro.z);
   //Serial.print(buffer);
   snprintf(buffer, sizeof(buffer), "Accel: (%.4f,  %.4f,  %.4f)\n", accel.x, accel.y, accel.z);
-  //Serial.print(buffer);
-  snprintf(buffer, sizeof(buffer), "Pitch: %.4f   Roll: %.4f\n", orientation.y, orientation.z);
   Serial.print(buffer);
+  snprintf(buffer, sizeof(buffer), "Pitch: %.4f   Roll: %.4f\n", orientation.y, orientation.z);
+  //Serial.print(buffer);
 
-  // 
-  if (accel.z < 0) {
+  // Allert when upside down
+  if (accel.z > 0) {
     digitalWrite(LED_PIN, HIGH);
   } else {
     digitalWrite(LED_PIN, LOW);
   }
-  if (digitalRead(Button_PIN) == LOW) {
-    Serial.println("Callibrating IMU...");
-    callibIMU(IMU_Offsets);
-  }
 
-  //delay(500);
+
+  delay(1000);
 }
