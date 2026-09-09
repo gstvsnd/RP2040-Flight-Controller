@@ -6,7 +6,7 @@
 extern const int CS_PIN; // GP17
 
 // IMU scalars
-float gain_and_bias_calibration = 0.9835; // Skalad med 0.9835 efter 2-punktskalibrering
+const float gain_and_bias_calibration = 0.9835; // Skalad med 0.9835 efter 2-punktskalibrering
 const float ACCEL_SCALE = 16384.0 / (9.82 * gain_and_bias_calibration); // 1g = 9.82 m/s^2, 16384 LSB/g for ±2g range
 const float GYRO_SCALE = 131.0 / (PI / 180.0); // 1°/s = π/180 rad/s, 131 LSB/(°/s) for ±250°/s range
 const float TEMP_SCALE = 340.0;
