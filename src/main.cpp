@@ -22,6 +22,9 @@ const byte ACCEL_XOUT_H = 0x3B;
 
 int worthless_integer = 0;
 
+// ---- PWM motor control ----
+const uint32_t PWM_FREQUENCY = 30000; // Hz
+
 // ---- RC Controller stuff ----
 AlfredoCRSF crsf;
 
@@ -49,7 +52,7 @@ void setup() {
   delay(100); // Wait for hardware to stabilize
 
   writeRegister(PWR_MGMT_1, 0x00); // IMU
-  
+
   Serial.println("--- Setup complete ---");
   digitalWrite(LED_PIN, LOW);
 }
@@ -85,6 +88,18 @@ void loop() {
   // Read RC controller input
   ControllerInput input = listen_channels(input, 1, 2, 3, 4, 7, 8, 9, 10, 5, 6);
   
+
+  // PWM
+  // 2. Om länk finns, koppla gaspinnen direkt till PWM-pinnen
+  // rcData.throttle är mellan 0.0 och 1.0 baserat på din funktion
+  int pwmValue = (int)(input.throttle * 255.0f);
   
-  delay(500);
+  // Säkerställ att värdet håller sig mellan 0 och 255
+  pwmValue = constrain(pwmValue, 0, 255);
+
+  // Skicka ut PWM till motorn/MOSFETen
+  analogWrite(motor1_PIN, pwmValue);
+  analogWrite(motor2_PIN, pwmValue);
+  analogWrite(motor3_PIN, pwmValue);
+  analogWrite(motor4_PIN, pwmValue);
 }
