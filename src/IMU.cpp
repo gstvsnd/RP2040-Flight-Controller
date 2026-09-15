@@ -18,14 +18,12 @@ void writeRegister(byte reg, byte data) {
 // Read IMU data and apply calibration offsets
 IMUstruct readIMU(IMUCalibrationData &calibrationData) {
   digitalWrite(CS_PIN, LOW);
-  SPI.transfer(ACCEL_XOUT_H | 0x80); // Läs ut accelerometerdata (MSB först)
+  SPI.transfer(ACCEL_XOUT_H | 0x80); // Read IMU
 
   int16_t rawAccelX = (SPI.transfer(0x00) << 8) | SPI.transfer(0x00);
   int16_t rawAccelY = (SPI.transfer(0x00) << 8) | SPI.transfer(0x00);
   int16_t rawAccelZ = (SPI.transfer(0x00) << 8) | SPI.transfer(0x00);
-
   int16_t readRawTemp = (SPI.transfer(0x00) << 8) | SPI.transfer(0x00); // 
-
   int16_t rawGyroX = (SPI.transfer(0x00) << 8) | SPI.transfer(0x00);
   int16_t rawGyroY = (SPI.transfer(0x00) << 8) | SPI.transfer(0x00);
   int16_t rawGyroZ = (SPI.transfer(0x00) << 8) | SPI.transfer(0x00);
@@ -36,9 +34,18 @@ IMUstruct readIMU(IMUCalibrationData &calibrationData) {
   float accelY = (rawAccelY / ACCEL_SCALE) - calibrationData.accel.y;
   float accelZ = (rawAccelZ / ACCEL_SCALE) - calibrationData.accel.z;
 
-  float gyroX = (rawGyroX / GYRO_SCALE) - calibrationData.gyro.x;
-  float gyroY = (rawGyroY / GYRO_SCALE) - calibrationData.gyro.y;
-  float gyroZ = (rawGyroZ / GYRO_SCALE) - calibrationData.gyro.z;
+  // Low-Pass Filter Gyro-data
+  static float filteredGyroX = 0;
+  static float filteredGyroY = 0;
+  static float filteredGyroZ = 0;
+  float filterFactor = 0.7f;
+  filteredGyroX = (filterFactor * filteredGyroX) + ((1.0f - filterFactor) * rawGyroX);
+  filteredGyroY = (filterFactor * filteredGyroY) + ((1.0f - filterFactor) * rawGyroY);
+  filteredGyroZ = (filterFactor * filteredGyroZ) + ((1.0f - filterFactor) * rawGyroZ);
+
+  float gyroX = (filteredGyroX / GYRO_SCALE) - calibrationData.gyro.x;
+  float gyroY = (filteredGyroY / GYRO_SCALE) - calibrationData.gyro.y;
+  float gyroZ = (filteredGyroZ / GYRO_SCALE) - calibrationData.gyro.z;
 
   Vector3 accel = {accelX, accelY, accelZ};
   Vector3 gyro = {gyroX, gyroY, gyroZ};
@@ -54,6 +61,7 @@ void callibIMU(IMUCalibrationData &calibrationData) {
   calibrationData = {Vector3{0, 0, 0}, Vector3{0, 0, 0}, Matrix3x3{{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}}}; // Reset offsets for new callibration
   
   // Estimate current accelereration - Rolling average
+  writeRegister(0x1A, 0x03); // (Digital Low Pass Filter - DLPF) ish 42 Hz, 
   IMUstruct base = {Vector3{0,0,0}, Vector3{0,0,0}}; // Zero basevalues
   int numSamples = 200;
   for (int i = 0; i < numSamples; i++) {
