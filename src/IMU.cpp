@@ -126,7 +126,7 @@ Vector3 IMUyprOrientation(const Vector3& accel, const Vector3& gyro, float dt) {
   float gyroPitch = gyro.y;
 
   // <3 komplementärfiltret <3
-  float TrustFactor = 0.05; // Accelerometer weight (0.0 -> 1.0)
+  float TrustFactor = 0.10; // Accelerometer weight (0.0 -> 1.0)
   pitch = (1 - TrustFactor) * (pitch + (gyroPitch * dt)) + TrustFactor * accPitch;
   roll  = (1 - TrustFactor) * (roll + (gyroRoll * dt)) + TrustFactor * accRoll;
 
