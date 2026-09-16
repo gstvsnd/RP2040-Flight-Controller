@@ -2,14 +2,16 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <math.h>
+#include <AlfredoCRSF.h>
 #include "VectorMath.h"
 #include "IMU.h"
 #include "RC_Controlls.h"
-#include <AlfredoCRSF.h>
+#include "MotorController.h"
 
 // ---- Pin Definitions ----
 const int CS_PIN = 17; // GP17
 const int LED_PIN = 20; // GP20
+const int Battery_PIN = 28; // GP28
 
 const int motor1_PIN = 4; // LB
 const int motor2_PIN = 5; // RB
@@ -21,9 +23,6 @@ const byte PWR_MGMT_1 = 0x6B;
 const byte ACCEL_XOUT_H = 0x3B;
 
 int worthless_integer = 0;
-
-// ---- PWM motor control ----
-const uint32_t PWM_FREQUENCY = 30000; // Hz
 
 // ---- RC Controller stuff ----
 AlfredoCRSF crsf;
@@ -40,6 +39,7 @@ void setup() {
   digitalWrite(CS_PIN, HIGH);
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, HIGH);
+  pinMode(Battery_PIN, INPUT);
   pinMode(motor1_PIN, OUTPUT);
   pinMode(motor2_PIN, OUTPUT);
   pinMode(motor3_PIN, OUTPUT);
@@ -59,47 +59,114 @@ void setup() {
 
 void loop() {
   // Loop-time (dt) calculation
-  static unsigned long lastTime = 0;
   unsigned long currentTime = micros();
+  static unsigned long lastTime = 0;
   if (lastTime == 0) lastTime = currentTime; 
   float dt = (currentTime - lastTime) / 1000000.0f; // us to s
   lastTime = currentTime;
 
-  // Make IMU offsets static to survive loop iterations
-  static IMUCalibrationData calibrationData;
-  if (worthless_integer == 0) {
-    digitalWrite(LED_PIN, HIGH);
-    delay(2000);
-    Serial.print("Callibrating IMU...\n");
-    callibIMU(calibrationData);
-
-    worthless_integer = 1;
-    Serial.print("--- Setup complete ---\n");
-    digitalWrite(LED_PIN, LOW);
-  }
+  // Timers
+  unsigned long currentMillis = millis();
+  static unsigned long lastPrintTime = 0;
+  static unsigned long lastBlinkTime = 0;
+  static bool ledBlinkState = false;
 
   // Read IMU data
+  static IMUCalibrationData calibrationData;
   IMUstruct data = readIMU(calibrationData);
-  Vector3 accel = data.accel;
-  Vector3 gyro = data.gyro;
-  Vector3 orientation = IMUyprOrientation(accel, gyro, dt);
-  Vector3 translation = IMUxyzTranslation(accel, gyro, dt); // INTE KLAR
+  if (worthless_integer == 0) {
+    Serial.println("Calibrating IMU...");
+    digitalWrite(LED_PIN, HIGH);
+    delay(3000);
+    
+    callibIMU(calibrationData);
+
+    Serial.println("Calibration Complete!\n");
+    digitalWrite(LED_PIN, LOW);
+    worthless_integer = 1;
+  }
+
+  float battery_voltage = analogRead(Battery_PIN) * (2.0f * (3.3f / 1023.0f)); // Voltage divider with equal resistors 1023 for 10-bit ADC (arduino analogRead returns 0-1023 for 0-3.3V)
 
   // Read RC controller input
   ControllerInput input = listen_channels(input, 1, 2, 3, 4, 7, 8, 9, 10, 5, 6);
+  /* Controller Structure: 
+  Sticks: throttle(0 to 1f), yaw(-1 to 1), pitch(-1 to 1), roll(-1 to 1), 
+  Switshes SA(0, 1, 2), SB(1, 2, 3), SC(0, 1, 2), SD(0, 1, 2), SE(0, 2), SF(0, 2). 
+  on my transmitter... (RM TX15)*/
   
-
-  // PWM
-  // 2. Om länk finns, koppla gaspinnen direkt till PWM-pinnen
-  // rcData.throttle är mellan 0.0 och 1.0 baserat på din funktion
-  int pwmValue = (int)(input.throttle * 255.0f);
   
-  // Säkerställ att värdet håller sig mellan 0 och 255
-  pwmValue = constrain(pwmValue, 0, 255);
+  //_______________________________________________________________________________________________________________________
+  // PID tuning
+  static float rollInt = 0, rollPrevErr = 0;
+  static float pitchInt = 0, pitchPrevErr = 0;
+  static float yawInt = 0, yawPrevErr = 0;
 
-  // Skicka ut PWM till motorn/MOSFETen
-  analogWrite(motor1_PIN, pwmValue);
-  analogWrite(motor2_PIN, pwmValue);
-  analogWrite(motor3_PIN, pwmValue);
-  analogWrite(motor4_PIN, pwmValue);
+  static float kp = 0.275f; 
+  static float ki = 0.002f;
+  static float kd = 0.005f;
+
+  float radians_second = 3.1415 * (2.0 / 1.0);
+
+  // Compute
+  float rollCorrection  = computePID(input.roll * radians_second, data.gyro.x, dt, kp, ki, kd, 2.0f*3.1415f / (1.0f), rollInt, rollPrevErr); // input, measured, dt, kp, ki, kd, maxOutput, integrator, prevError
+  float pitchCorrection = computePID(-input.pitch * radians_second, data.gyro.y, dt, kp, ki, kd, 2.0f*3.1415f / (1.0f), pitchInt, pitchPrevErr);
+  float yawCorrection = computePID(input.yaw * 4.0 * radians_second, data.gyro.z, dt, kp, ki, kd, 1.0f*3.1415f / (1.0f), yawInt, yawPrevErr);
+  //_______________________________________________________________________________________________________________________
+
+
+  // ARM drone with SE switch
+  if (input.SE == 2 && crsf.isLinkUp() && battery_voltage > 3.0f) {
+    digitalWrite(LED_PIN, HIGH);
+    mixMotors(input.throttle, yawCorrection, pitchCorrection, rollCorrection);
+      if (battery_voltage < 3.3f) { // Battery warning
+      Serial.println("Battery low!");
+      if (currentMillis - lastBlinkTime >= 300) {
+        lastBlinkTime = currentMillis;
+        ledBlinkState = !ledBlinkState;
+        digitalWrite(LED_PIN, ledBlinkState ? HIGH : LOW); // magic
+      }
+    }
+  }
+  else if (battery_voltage < 3.0f) { // Battery warning
+    killMotors();
+    Serial.println("Battery critical!");
+    if (currentMillis - lastBlinkTime >= 150) {
+      lastBlinkTime = currentMillis;
+      ledBlinkState = !ledBlinkState;
+      digitalWrite(LED_PIN, ledBlinkState ? HIGH : LOW); // magic
+    }
+  }
+  else {
+    killMotors();
+    digitalWrite(LED_PIN, LOW);
+  }
+
+  ///*
+  if (currentMillis - lastPrintTime >= 2000) { // prints every 2 sec
+    lastPrintTime = currentMillis;
+    Serial.println("\nDebug data:");
+    Serial.print("Gyro: ");
+    Serial.print(data.gyro.x, 3);
+    Serial.print(", ");
+    Serial.print(data.gyro.y, 3);
+    Serial.print(", ");
+    Serial.print(data.gyro.z, 3);
+    Serial.println();
+    Serial.print("PID corrections: ");
+    Serial.print(rollCorrection, 3);
+    Serial.print(", ");
+    Serial.print(pitchCorrection, 3);
+    Serial.print(", ");
+    Serial.print(yawCorrection, 3);
+    Serial.println();
+    Serial.print("Roll-stick: "); 
+    Serial.print(input.roll);
+    Serial.print(" | Correction: "); 
+    Serial.println(rollCorrection, 4);
+    Serial.print("Pitch-stick: "); 
+    Serial.print(input.pitch);
+    Serial.print(" | Correction: "); 
+    Serial.println(pitchCorrection, 4);
+  }//*/
 }
