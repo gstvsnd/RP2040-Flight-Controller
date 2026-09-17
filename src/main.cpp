@@ -128,6 +128,13 @@ void loop() {
       digitalWrite(LED_PIN, ledBlinkState ? HIGH : LOW); // magic
     }
   }
+  else if (input.SF == 2) { // Callibrate IMU
+    digitalWrite(LED_PIN, HIGH);
+    Serial.println("Calibrating IMU...");
+    callibIMU(calibrationData);
+    Serial.println("Calibration Complete!\n");
+    digitalWrite(LED_PIN, LOW);
+  }
   else {
     killMotors();
     digitalWrite(LED_PIN, LOW);
