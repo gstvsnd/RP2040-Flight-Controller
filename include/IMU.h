@@ -2,6 +2,8 @@
 #ifndef IMU_H
 #define IMU_H
 
+#include "VectorMath.h" // realy needed?
+
 // ---- Pin Definitions ----
 extern const int CS_PIN; // GP17
 

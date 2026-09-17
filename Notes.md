@@ -17,40 +17,40 @@ Acceleration unit: meters/second*2
 
 > TND - To Not Do
 
-> Done - Works (But can be improved)
+> Done - Works (Can be improved)
 
 ## Main Features
 ### Orientational Awareness
-    IMU Sensor Readings - Done
-    Roll/Pitch Estimation - Done
-    Accelerometer/Gyroscope Complimentary Filter - Done
+* IMU Sensor Readings - Done
+* Roll/Pitch Estimation - Done
+* Accelerometer/Gyroscope Complimentary Filter - Done
 ### Callibration
-    Rotational callibration matrix - Done
+* Rotational callibration matrix - Done
 ### Stable Flight
-    Motor control (PWM) - Done
-    PID Controlls - TBC
+* Motor control (PWM) - Done
+* PID Controlls - TBC
 ### Flight Modes
-    Acro mode - TBC
-    Angle mode - TBD
+* Acro mode - TBC
+* Angle mode - TBD
 ### Remote Controll
-    ExpressLRS Radio Communication - Done
+* ExpressLRS Radio Communication - Done
 
 ## Main Hardware (BOM-ish)
 ### MCU
-* Raspberry Pi Pico 2040
+    1x Raspberry Pi Pico 2040
 ### IMU
-* MPU 6500/9250/9255 - TBC <!-- Det är vad det står på sensorn... -->
+    1x MPU 6500/9250/9255 - TBC <!-- Det är vad det står på sensorn... -->
 ### Motors 
-* 4x8520 brushed motors
+    4x 8520 brushed motors
 ### Motor controlls
-* 4x AO3400A N-Channel Mosfets for PWM
-* 4x 100ohm resistors (serial with PWM signals)
-* 4x 4.6kohm resistors pull-down
-* 4x SS34 Flyback-Diodes
+    4x AO3400A N-Channel Mosfets for PWM
+    4x 100ohm resistors (serial with PWM signals)
+    4x 4.6kohm resistors pull-down
+    4x SS34 Flyback-Diodes
 ### Battery
 <!-- * 400mah LiPo battery (from a vape I found on the golf course) - TBD: Battery delivers less current than needed to give full gas and supply PICO. -->
-* 680mah 95C (high current) 1S LiPo
+    1x 680mah 95C (high current) 1S LiPo
 ### Radio Transmitter 
-* ExpressLRS 2.4GHz reciever
+    ExpressLRS 2.4GHz reciever
 ### Quadrocopter Frame
-* 3D printed PETG model
+    1x 3D printed PETG model

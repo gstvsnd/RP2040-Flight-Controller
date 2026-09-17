@@ -6,7 +6,7 @@
 #include "VectorMath.h"
 #include "IMU.h"
 #include "RC_Controlls.h"
-#include "MotorController.h"
+#include "FlightController.h"
 
 // ---- Pin Definitions ----
 const int CS_PIN = 17; // GP17
@@ -95,33 +95,22 @@ void loop() {
   Switshes SA(0, 1, 2), SB(1, 2, 3), SC(0, 1, 2), SD(0, 1, 2), SE(0, 2), SF(0, 2), 
   Tuning Pots S1(0 to 1), S2(0 to 1)
   on my transmitter... (RM TX15)*/
-  
-  
-  //_______________________________________________________________________________________________________________________
-  // PID tuning
-  static float rollInt = 0, rollPrevErr = 0;
-  static float pitchInt = 0, pitchPrevErr = 0;
-  static float yawInt = 0, yawPrevErr = 0;
-
-  static float kp = 0.275f * input.S1; 
-  static float ki = 0.002f * input.S2;
-  static float kd = 0.005f;
-
-  float max_radians_second = 3.1415 * (2.0 / 1.0);
-
-  // Compute corrections for wished angular velocity
-  // input (normalized), measured(rad/sec), dt, proportional, integrator, derivative, maximum_rotation (rad/sec), integrator, prevError
-  float rollCorrection  = angularVelocityPID(input.roll, data.gyro.x, dt, kp, ki, kd, max_radians_second, rollInt, rollPrevErr); 
-  float pitchCorrection = angularVelocityPID(-input.pitch, data.gyro.y, dt, kp, ki, kd, max_radians_second, pitchInt, pitchPrevErr);
-  float yawCorrection = angularVelocityPID(input.yaw, data.gyro.z, dt, kp, ki, kd, max_radians_second, yawInt, yawPrevErr);
-  //_______________________________________________________________________________________________________________________
 
 
   // ARM drone with SE switch
   if (input.SE == 2 && crsf.isLinkUp() && battery_voltage > 3.0f) {
     digitalWrite(LED_PIN, HIGH);
-    mixMotors(input.throttle, yawCorrection, pitchCorrection, rollCorrection);
-      if (battery_voltage < 3.3f) { // Battery warning
+    // Decide Flight mode
+    if (input.SD == 0) {
+      flyAcroMode(input, data, dt);
+    }
+    if (input.SD == 1) {
+      flyAngleMode(input, data, dt); //placeholder
+    }
+    if (input.SD == 2) {
+      flyOtherMode(); //placeholderplaceholder
+    }
+    if (battery_voltage < 3.3f) { // Battery warning
       Serial.println("Battery low!");
       if (currentMillis - lastBlinkTime >= 300) {
         lastBlinkTime = currentMillis;
@@ -155,24 +144,5 @@ void loop() {
     Serial.print(", ");
     Serial.print(data.gyro.z, 3);
     Serial.println();
-    Serial.print("PID corrections: ");
-    Serial.print(rollCorrection, 3);
-    Serial.print(", ");
-    Serial.print(pitchCorrection, 3);
-    Serial.print(", ");
-    Serial.print(yawCorrection, 3);
-    Serial.println();
-    Serial.print("Roll-stick: "); 
-    Serial.print(input.roll);
-    Serial.print(" | Correction: "); 
-    Serial.println(rollCorrection, 4);
-    Serial.print("Pitch-stick: "); 
-    Serial.print(input.pitch);
-    Serial.print(" | Correction: "); 
-    Serial.println(pitchCorrection, 4);
-    Serial.print("Tuning sticks - S1: ");
-    Serial.print(input.S1, 5);
-    Serial.print(" | S2: ");
-    Serial.println(input.S2, 5);
   }//*/
 }
