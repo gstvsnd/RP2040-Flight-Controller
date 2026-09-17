@@ -12,7 +12,7 @@
   * MCU: **Raspberry Pi Pico RP2040**
   * IMU: **MPU 6500/9250/9255**
   * Radio: **CRSF/ExpressLRS 2.4Ghz receiver & transmitter** (joysticks and switches)
-  * Chassi: **Something 3D Printed in PETG**
+  * Chassi: **Something 3D Printed**
   * Motors: **8520**
   * Battery: **680mah 95C LiPo**
   * Motorcontroller: **PWM Controlled Transistor Gates**
