@@ -28,7 +28,7 @@ Acceleration unit: meters/second*2
 * Rotational callibration matrix - Done
 ### Stable Flight
 * Motor control (PWM) - Done
-* PID Controlls - TBC
+* PID Controlls - WIP
 * Error Handling Logic - TBD
 ### Flight Modes
 * Acro mode - TBC
