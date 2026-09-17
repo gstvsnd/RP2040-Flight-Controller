@@ -13,6 +13,7 @@ void mixMotors(float throttle, float yaw, float pitch, float roll) {
   // - Pitch: Nose down
   // - Yaw: Rotate CW
 
+  // motor mixer
   float m0 = throttle + roll - pitch - yaw; // LB CW
   float m1 = throttle - roll - pitch + yaw; // RB CCW
   float m2 = throttle + roll + pitch + yaw; // LF CCW
@@ -37,9 +38,9 @@ void killMotors() {
   analogWrite(motor3_PIN, 0);
   analogWrite(motor4_PIN, 0);
 }
-float computePID(float setpoint, float measured, float dt, float kp, float ki, float kd, float maxOutput, float &integrator, float &prevError) {
+float angularVelocityPID(float setpoint, float measured, float dt, float kp, float ki, float kd, float max_radians_second, float &integrator, float &prevError) {
     // error
-    float error = setpoint - measured;
+    float error = (setpoint * max_radians_second) - measured; // Users goal rotation - Measured rotation
 
     // Proportional-error
     float pOut = kp * error;
@@ -64,9 +65,10 @@ float computePID(float setpoint, float measured, float dt, float kp, float ki, f
     float output = pOut + iOut + dOut;
 
     // max out:
+    float maxOutput = 2 * 3.1415;
     if (output > maxOutput) output = maxOutput;
     if (output < -maxOutput) output = -maxOutput;
+    output / (2 * 3.1415f)
 
-
-    return output / (2 * 3.14f);
+    return output;
 }

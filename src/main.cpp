@@ -107,12 +107,13 @@ void loop() {
   static float ki = 0.002f * input.S2;
   static float kd = 0.005f;
 
-  float radians_second = 3.1415 * (2.0 / 1.0);
+  float max_radians_second = 3.1415 * (2.0 / 1.0);
 
-  // Compute
-  float rollCorrection  = computePID(input.roll * radians_second, data.gyro.x, dt, kp, ki, kd, 2.0f*3.1415f / (1.0f), rollInt, rollPrevErr); // input, measured, dt, kp, ki, kd, maxOutput, integrator, prevError
-  float pitchCorrection = computePID(-input.pitch * radians_second, data.gyro.y, dt, kp, ki, kd, 2.0f*3.1415f / (1.0f), pitchInt, pitchPrevErr);
-  float yawCorrection = computePID(input.yaw * 4.0 * radians_second, data.gyro.z, dt, kp, ki, kd, 1.0f*3.1415f / (1.0f), yawInt, yawPrevErr);
+  // Compute corrections for wished angular velocity
+  // input (normalized), measured(rad/sec), dt, proportional, integrator, derivative, maximum_rotation (rad/sec), integrator, prevError
+  float rollCorrection  = angularVelocityPID(input.roll, data.gyro.x, dt, kp, ki, kd, max_radians_second, rollInt, rollPrevErr); 
+  float pitchCorrection = angularVelocityPID(-input.pitch, data.gyro.y, dt, kp, ki, kd, max_radians_second, pitchInt, pitchPrevErr);
+  float yawCorrection = angularVelocityPID(input.yaw, data.gyro.z, dt, kp, ki, kd, max_radians_second, yawInt, yawPrevErr);
   //_______________________________________________________________________________________________________________________
 
 

@@ -4,6 +4,10 @@ Nu ska vi försöka bygga en drönare med en egen flight controller <!-- Jättek
 ## Project idea (Updated 2026-08-31)
 A small radio controlled quadrocopter drone based of a Paspberry Pi Pico running the flight controller. A IMU "Inertial Measurement Unit" accounts for spatial context and the motors is controlled by PWM "Pulse Width Modulation" in a PID loop for stable flight. The rest will just work out.
 
+Coordinate system: (x, y, z) <=> (North, East, Down)
+Rotation units: radians/second
+acceleration: meters/second
+
 > WIP - Work In Progress
 
 > TBC - To Be Continued
@@ -11,7 +15,6 @@ A small radio controlled quadrocopter drone based of a Paspberry Pi Pico running
 > TBD - To Be Done
 
 > TND - To Not Do
-
 
 ## Features
 ### Orientational Awareness

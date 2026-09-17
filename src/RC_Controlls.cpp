@@ -38,7 +38,6 @@ ControllerInput listen_channels(ControllerInput input, int THR, int YAW, int PIT
     }
     else {
         Serial.println("No radiolink");
-        ControllerInput input;
         input.throttle = 0.0f;
         input.yaw = 0.0f;
         input.pitch = 0.0f;
