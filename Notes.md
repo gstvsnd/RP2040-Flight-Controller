@@ -29,6 +29,7 @@ Acceleration unit: meters/second*2
 ### Stable Flight
 * Motor control (PWM) - Done
 * PID Controlls - TBC
+* Error Handling Logic - TBD
 ### Flight Modes
 * Acro mode - TBC
 * Angle mode - TBD
@@ -54,3 +55,11 @@ Acceleration unit: meters/second*2
     ExpressLRS 2.4GHz reciever
 ### Quadrocopter Frame
     1x 3D printed PETG model
+
+## TODO:
+    1. Repare motor physical controller
+    2. Correct PID and MotorMixer for matching units
+    3. Tune PID loop
+    4. Implement Angular Flight Mode
+    5. Implement error handeling for flight safety
+    6. Orientation & Translation (IMU.cpp)

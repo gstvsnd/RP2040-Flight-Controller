@@ -16,8 +16,9 @@ int getSwitchPosition(int channelValue) {
   }
 }
 
-ControllerInput listen_channels(ControllerInput input, int THR, int YAW, int PITCH, int ROLL, int SA, int SB, int SC, int SD, int SE, int SF, int S1, int S2) {
+ControllerInput listen_channels(int THR, int YAW, int PITCH, int ROLL, int SA, int SB, int SC, int SD, int SE, int SF, int S1, int S2) {
     crsf.update();
+    ControllerInput input;
 
     if (crsf.isLinkUp()) {
         input.throttle = ((float)crsf.getChannel(THR) / 1000.0f) - 1; // Normalize to [0, 1]

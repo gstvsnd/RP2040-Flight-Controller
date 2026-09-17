@@ -72,24 +72,13 @@ void loop() {
   static bool ledBlinkState = false;
 
   // Read IMU data
-  static IMUCalibrationData calibrationData;
+  static IMUCalibrationData calibrationData = callibIMU();
   IMUstruct data = readIMU(calibrationData);
-  if (worthless_integer == 0) {
-    Serial.println("Calibrating IMU...");
-    digitalWrite(LED_PIN, HIGH);
-    delay(3000);
-    
-    callibIMU(calibrationData);
-
-    Serial.println("Calibration Complete!\n");
-    digitalWrite(LED_PIN, LOW);
-    worthless_integer = 1;
-  }
 
   float battery_voltage = analogRead(Battery_PIN) * (2.0f * (3.3f / 1023.0f)); // Voltage divider with equal resistors 1023 for 10-bit ADC (arduino analogRead returns 0-1023 for 0-3.3V)
 
   // Read RC controller input
-  ControllerInput input = listen_channels(input, 3, 4, 2, 1, 6, 7, 8, 9, 5, 10, 11, 12);
+  ControllerInput input = listen_channels(3, 4, 2, 1, 6, 7, 8, 9, 5, 10, 11, 12);
   /* Controller Structure: 
   Sticks: throttle(0 to 1), yaw(-1 to 1), pitch(-1 to 1), roll(-1 to 1), 
   Switshes SA(0, 1, 2), SB(1, 2, 3), SC(0, 1, 2), SD(0, 1, 2), SE(0, 2), SF(0, 2), 
@@ -98,16 +87,16 @@ void loop() {
 
 
   // ARM drone with SE switch
-  if (input.SE == 2 && crsf.isLinkUp() && battery_voltage > 3.0f) {
+  if (input.SE == 2 && input.throttle < 0.05f && crsf.isLinkUp() && battery_voltage > 3.0f) {
     digitalWrite(LED_PIN, HIGH);
     // Decide Flight mode
     if (input.SD == 0) {
       flyAcroMode(input, data, dt);
     }
-    if (input.SD == 1) {
+    else if (input.SD == 1) {
       flyAngleMode(input, data, dt); //placeholder
     }
-    if (input.SD == 2) {
+    else if (input.SD == 2) {
       flyOtherMode(); //placeholderplaceholder
     }
     if (battery_voltage < 3.3f) { // Battery warning
@@ -119,6 +108,13 @@ void loop() {
       }
     }
   }
+  else if (input.SE == 0 && input.SF == 2) { // Callibrate IMU
+    digitalWrite(LED_PIN, HIGH);
+    Serial.println("Calibrating IMU...");
+    callibIMU();
+    Serial.println("Calibration Complete!\n");
+    digitalWrite(LED_PIN, LOW);
+  }
   else if (battery_voltage < 3.0f) { // Battery warning
     killMotors();
     Serial.println("Battery critical!");
@@ -127,13 +123,6 @@ void loop() {
       ledBlinkState = !ledBlinkState;
       digitalWrite(LED_PIN, ledBlinkState ? HIGH : LOW); // magic
     }
-  }
-  else if (input.SF == 2) { // Callibrate IMU
-    digitalWrite(LED_PIN, HIGH);
-    Serial.println("Calibrating IMU...");
-    callibIMU(calibrationData);
-    Serial.println("Calibration Complete!\n");
-    digitalWrite(LED_PIN, LOW);
   }
   else {
     killMotors();

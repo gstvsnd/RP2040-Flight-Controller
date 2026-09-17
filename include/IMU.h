@@ -30,7 +30,7 @@ void writeRegister(byte reg, byte data);
 // Read IMU data and apply calibration offsets
 IMUstruct readIMU(IMUCalibrationData &calibrationData);
 // Find calibration offsets for IMU
-void callibIMU(IMUCalibrationData &calibrationData);
+IMUCalibrationData callibIMU();
 // ---- Orientation and Translation Vectors ----
 // (-, pitch, roll) from accelerometer and gyroscope data
 Vector3 IMUyprOrientation(const Vector3& accel, const Vector3& gyro, float dt);

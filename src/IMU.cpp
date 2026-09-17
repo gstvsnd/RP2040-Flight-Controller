@@ -56,9 +56,9 @@ IMUstruct readIMU(IMUCalibrationData &calibrationData) {
 
   return {accel, gyro};
 }
-void callibIMU(IMUCalibrationData &calibrationData) {
+IMUCalibrationData callibIMU() {
   // Callibrate IMU
-  calibrationData = {Vector3{0, 0, 0}, Vector3{0, 0, 0}, Matrix3x3{{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}}}; // Reset offsets for new callibration
+  IMUCalibrationData calibrationData = {Vector3{0, 0, 0}, Vector3{0, 0, 0}, Matrix3x3{{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}}}; // Reset offsets for new callibration
   
   // Estimate current accelereration - Rolling average
   writeRegister(0x1A, 0x03); // (Digital Low Pass Filter - DLPF) ish 42 Hz, 
@@ -108,6 +108,8 @@ void callibIMU(IMUCalibrationData &calibrationData) {
   calibrationData.gyro.x = base.gyro.x;
   calibrationData.gyro.y = base.gyro.y;
   calibrationData.gyro.z = base.gyro.z;
+
+  return calibrationData;
 }
 // ---- Orientation and Translation Vectors ----
 // (-, pitch, roll) from accelerometer and gyroscope data
