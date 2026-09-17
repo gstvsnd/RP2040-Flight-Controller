@@ -89,10 +89,11 @@ void loop() {
   float battery_voltage = analogRead(Battery_PIN) * (2.0f * (3.3f / 1023.0f)); // Voltage divider with equal resistors 1023 for 10-bit ADC (arduino analogRead returns 0-1023 for 0-3.3V)
 
   // Read RC controller input
-  ControllerInput input = listen_channels(input, 1, 2, 3, 4, 7, 8, 9, 10, 5, 6);
+  ControllerInput input = listen_channels(input, 3, 4, 2, 1, 6, 7, 8, 9, 5, 10, 11, 12);
   /* Controller Structure: 
-  Sticks: throttle(0 to 1f), yaw(-1 to 1), pitch(-1 to 1), roll(-1 to 1), 
-  Switshes SA(0, 1, 2), SB(1, 2, 3), SC(0, 1, 2), SD(0, 1, 2), SE(0, 2), SF(0, 2). 
+  Sticks: throttle(0 to 1), yaw(-1 to 1), pitch(-1 to 1), roll(-1 to 1), 
+  Switshes SA(0, 1, 2), SB(1, 2, 3), SC(0, 1, 2), SD(0, 1, 2), SE(0, 2), SF(0, 2), 
+  Tuning Pots S1(0 to 1), S2(0 to 1)
   on my transmitter... (RM TX15)*/
   
   
@@ -102,8 +103,8 @@ void loop() {
   static float pitchInt = 0, pitchPrevErr = 0;
   static float yawInt = 0, yawPrevErr = 0;
 
-  static float kp = 0.275f; 
-  static float ki = 0.002f;
+  static float kp = 0.275f * input.S1; 
+  static float ki = 0.002f * input.S2;
   static float kd = 0.005f;
 
   float radians_second = 3.1415 * (2.0 / 1.0);
@@ -168,5 +169,9 @@ void loop() {
     Serial.print(input.pitch);
     Serial.print(" | Correction: "); 
     Serial.println(pitchCorrection, 4);
+    Serial.print("Tuning sticks - S1: ");
+    Serial.print(input.S1, 5);
+    Serial.print(" | S2: ");
+    Serial.println(input.S2, 5);
   }//*/
 }

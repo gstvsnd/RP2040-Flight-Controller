@@ -16,7 +16,7 @@ int getSwitchPosition(int channelValue) {
   }
 }
 
-ControllerInput listen_channels(ControllerInput input, int THR, int YAW, int PITCH, int ROLL, int SA, int SB, int SC, int SD, int SE, int SF) {
+ControllerInput listen_channels(ControllerInput input, int THR, int YAW, int PITCH, int ROLL, int SA, int SB, int SC, int SD, int SE, int SF, int S1, int S2) {
     crsf.update();
 
     if (crsf.isLinkUp()) {
@@ -25,12 +25,16 @@ ControllerInput listen_channels(ControllerInput input, int THR, int YAW, int PIT
         input.pitch = ((float)crsf.getChannel(PITCH) / 500.0f) - 3.0f; // Normalize to [-1, 1]
         input.roll = ((float)crsf.getChannel(ROLL) / 500.0f) - 3.0f; // Normalize to [-1, 1]
 
+        // Sticks - (0, 1, 2) if possible
         input.SA = getSwitchPosition(crsf.getChannel(SA));
         input.SB = getSwitchPosition(crsf.getChannel(SB));
         input.SC = getSwitchPosition(crsf.getChannel(SC));
         input.SD = getSwitchPosition(crsf.getChannel(SD));
         input.SE = getSwitchPosition(crsf.getChannel(SE));
         input.SF = getSwitchPosition(crsf.getChannel(SF));
+
+        input.S1 = (((float)crsf.getChannel(S1) / 500.0f) - 2); // Normalize to [0, 2]
+        input.S2 = (((float)crsf.getChannel(S2) / 500.0f) - 2); // Normalize to [0, 2]
     }
     else {
         Serial.println("No radiolink");
@@ -45,6 +49,8 @@ ControllerInput listen_channels(ControllerInput input, int THR, int YAW, int PIT
         input.SD = -1; // Indicate no link
         input.SE = -1; // Indicate no link
         input.SF = -1; // Indicate no link
+        input.S1 = -1; // Indicate no link
+        input.S2 = -1; // Indicate no link
     }
 
     //Debugging output to serial monitor
@@ -69,7 +75,11 @@ ControllerInput listen_channels(ControllerInput input, int THR, int YAW, int PIT
     Serial.print(" | SE: ");
     Serial.print(input.SE);
     Serial.print(" | SF: ");
-    Serial.print(input.SF);*/
+    Serial.print(input.SF);
+    Serial.print(" | S1: ");
+    Serial.print(input.S1);
+    Serial.print(" | S2: ");
+    Serial.println(input.S2);*/
 
     return input;
 }
