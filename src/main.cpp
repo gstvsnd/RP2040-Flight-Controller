@@ -111,7 +111,7 @@ void loop() {
   else if (input.SE == 0 && input.SF == 2) { // Callibrate IMU
     digitalWrite(LED_PIN, HIGH);
     Serial.println("Calibrating IMU...");
-    callibIMU();
+    calibrationData = callibIMU();
     Serial.println("Calibration Complete!\n");
     digitalWrite(LED_PIN, LOW);
   }
