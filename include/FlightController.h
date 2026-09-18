@@ -2,7 +2,7 @@
 #ifndef FLIGHTCONTROLLER_H
 #define FLIGHTCONTROLLER_H
 
-#include "RC_Controlls.h"
+#include "RadioController.h"
 #include "IMU.h"
 
 // ---- PWM motor control ----

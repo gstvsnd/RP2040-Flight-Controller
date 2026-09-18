@@ -2,7 +2,7 @@
 Nu ska vi försöka bygga en drönare med en egen flight controller <!-- Jättekul! -->
 
 ## Project idea (Updated 2026-08-31)
-A small radio controlled quadrocopter drone based of a Paspberry Pi Pico running the flight controller. A IMU "Inertial Measurement Unit" accounts for spatial context and the motors is controlled by PWM "Pulse Width Modulation" in a PID loop for stable flight. The rest will just work out.
+A small radio controlled quadcopter drone based on a Paspberry Pi Pico running the flight controller. A IMU "Inertial Measurement Unit" accounts for spatial context and the motors is controlled by PWM "Pulse Width Modulation" in a PID loop for stable flight. The rest will just work out.
 
 Coordinate system: (x, y, z) <=> (North, East, Down) - directions, (roll, pitch yaw) - rotations
 General units: SI units & radians
@@ -23,17 +23,17 @@ Acceleration unit: meters/second*2
 ### Orientational Awareness
 * IMU Sensor Readings - Done
 * Roll/Pitch Estimation - Done
-* Accelerometer/Gyroscope Complimentary Filter - Done
-### Callibration
-* Rotational callibration matrix - Done
+* Accelerometer/Gyroscope Complementary Filter - Done
+### Calibration
+* Rotational calibration matrix - Done
 ### Stable Flight
 * Motor control (PWM) - Done
-* PID Controlls - WIP
+* PID Controls - WIP
 * Error Handling Logic - TBD
 ### Flight Modes
 * Acro mode - TBC
 * Angle mode - TBD
-### Remote Controll
+### Remote Control
 * ExpressLRS Radio Communication - Done
 
 ## Main Hardware (BOM-ish)
@@ -41,9 +41,9 @@ Acceleration unit: meters/second*2
     1x Raspberry Pi Pico 2040
 ### IMU
     1x MPU 6500/9250/9255 - TBC <!-- Det är vad det står på sensorn... -->
-### Motors 
+### Motors
     4x 8520 brushed motors
-### Motor controlls
+### Motor controller
     4x AO3400A N-Channel Mosfets for PWM
     4x 100ohm resistors (serial with PWM signals)
     4x 4.6kohm resistors pull-down
@@ -53,7 +53,7 @@ Acceleration unit: meters/second*2
     1x 680mah 95C (high current) 1S LiPo
 ### Radio Transmitter 
     ExpressLRS 2.4GHz reciever
-### Quadrocopter Frame
+### Quadcopter Frame
     1x 3D printed PETG model
 
 ## TODO:

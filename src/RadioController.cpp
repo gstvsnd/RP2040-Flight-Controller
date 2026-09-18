@@ -1,6 +1,6 @@
-// RC_Controlls.cpp
+// RadioController.cpp
 #include <AlfredoCRSF.h>
-#include "RC_Controlls.h"
+#include "RadioController.h"
 
 extern AlfredoCRSF crsf;
 

@@ -4,7 +4,7 @@
 
 ## Project-Configuration
 
-### Enviroment
+### Environment
   * VS Code "Visual Studio Code"
   * PlatformIO (VS Code Extension)
   * Arduino framework 

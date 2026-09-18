@@ -1,7 +1,7 @@
 // FlightController.cpp
 #include <Arduino.h>
 #include "FlightController.h"
-#include "RC_Controlls.h"
+#include "RadioController.h"
 #include "IMU.h"
 
 extern const int motor1_PIN = 4; // LB

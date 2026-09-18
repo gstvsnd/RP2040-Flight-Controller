@@ -26,8 +26,8 @@ code .
 
 Install "**PlatformIO IDE**" from the VS Code Extensions marketplace and follow PlatformIO's instructions.
 
-### 4. Build the AIO project
-To compile the firmware and check for any errors, clicSk the checkmark icon (**Build**) in the bottom PlatformIO status bar.
+### 4. Build the project
+To compile the firmware and check for any errors, click the checkmark icon (**Build**) in the bottom PlatformIO status bar.
 
 
 ### 5. Upload to Raspberry Pi Pico
@@ -39,4 +39,4 @@ To compile the firmware and check for any errors, clicSk the checkmark icon (**B
 
 ### 6. Monitor Serial Output (Optional)
 
-To view debug messages and sensor outputs from the flight controller, click the "conector" icon (Serial Monitor) in the bottom PlatformIO status bar.
+To view debug messages and sensor outputs from the flight controller, click the "connector" icon (Serial Monitor) in the bottom PlatformIO status bar.

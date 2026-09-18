@@ -5,7 +5,7 @@
 #include <AlfredoCRSF.h>
 #include "VectorMath.h"
 #include "IMU.h"
-#include "RC_Controlls.h"
+#include "RadioController.h"
 #include "FlightController.h"
 
 // ---- Pin Definitions ----
@@ -72,7 +72,7 @@ void loop() {
   static bool ledBlinkState = false;
 
   // Read IMU data
-  static IMUCalibrationData calibrationData = callibIMU();
+  static IMUCalibrationData calibrationData = calibrateIMU();
   IMUstruct data = readIMU(calibrationData);
 
   float battery_voltage = analogRead(Battery_PIN) * (2.0f * (3.3f / 1023.0f)); // Voltage divider with equal resistors 1023 for 10-bit ADC (arduino analogRead returns 0-1023 for 0-3.3V)
@@ -111,7 +111,7 @@ void loop() {
   else if (input.SE == 0 && input.SF == 2) { // Callibrate IMU
     digitalWrite(LED_PIN, HIGH);
     Serial.println("Calibrating IMU...");
-    calibrationData = callibIMU();
+    calibrationData = calibrateIMU();
     Serial.println("Calibration Complete!\n");
     digitalWrite(LED_PIN, LOW);
   }
