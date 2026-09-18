@@ -10,12 +10,6 @@ extern const int motor3_PIN = 6; // LF
 extern const int motor4_PIN = 7; // RF
 
 // Motor controller
-void killMotors() {
-  analogWrite(motor1_PIN, 0);
-  analogWrite(motor2_PIN, 0);
-  analogWrite(motor3_PIN, 0);
-  analogWrite(motor4_PIN, 0);
-}
 void mixMotors(float throttle, float yaw, float pitch, float roll) {
   // Quad X-mix
   // Coordinate System: (X=North, Y=East, Z=Down)
@@ -24,23 +18,13 @@ void mixMotors(float throttle, float yaw, float pitch, float roll) {
   // - Yaw: Rotate CW
 
   // motor mixer
-  float m0 = throttle + roll - pitch - yaw; // LB CW
-  float m1 = throttle - roll - pitch + yaw; // RB CCW
-  float m2 = throttle + roll + pitch + yaw; // LF CCW
-  float m3 = throttle - roll + pitch - yaw; // RF CW
-
-  // convert to PWM (0 - 255) and constrain to valid ranges
-  float powerFactor = 0.99f;
-  int pwm0 = constrain((int)(m0 * 255.0f * powerFactor), 0, 255);
-  int pwm1 = constrain((int)(m1 * 255.0f * powerFactor), 0, 255);
-  int pwm2 = constrain((int)(m2 * 255.0f * powerFactor), 0, 255);
-  int pwm3 = constrain((int)(m3 * 255.0f * powerFactor), 0, 255);
+  float m1 = throttle + roll - pitch - yaw; // LB CW
+  float m2 = throttle - roll - pitch + yaw; // RB CCW
+  float m3 = throttle + roll + pitch + yaw; // LF CCW
+  float m4 = throttle - roll + pitch - yaw; // RF CW
 
   // Write PWM values to motors
-  analogWrite(motor1_PIN, pwm0); // LB
-  analogWrite(motor2_PIN, pwm1); // RB
-  analogWrite(motor3_PIN, pwm2); // LF
-  analogWrite(motor4_PIN, pwm3); // RF
+  runMotors(m1, m2, m3, m4);
 }
 float angularVelocityPID(float setpoint, float measured, float dt, float kp, float ki, float kd, float max_radians_second, float &integrator, float &prevError) {
     // error
@@ -75,6 +59,26 @@ float angularVelocityPID(float setpoint, float measured, float dt, float kp, flo
     output = output / (2 * 3.1415f);
 
     return output;
+}
+
+void killMotors() {
+  analogWrite(motor1_PIN, 0);
+  analogWrite(motor2_PIN, 0);
+  analogWrite(motor3_PIN, 0);
+  analogWrite(motor4_PIN, 0);
+}
+void runMotors(float m1, float m2, float m3, float m4) { 
+  // convert to PWM (0 - 255) and constrain to valid ranges
+  float powerFactor = 0.95f; //restrictor
+  int pwm1 = constrain((int)(m1 * 255.0f * powerFactor), 0, 255);
+  int pwm2 = constrain((int)(m2 * 255.0f * powerFactor), 0, 255);
+  int pwm3 = constrain((int)(m3 * 255.0f * powerFactor), 0, 255);
+  int pwm4 = constrain((int)(m4 * 255.0f * powerFactor), 0, 255);
+  // Run
+  analogWrite(motor1_PIN, pwm1); // LB
+  analogWrite(motor2_PIN, pwm2); // RB
+  analogWrite(motor3_PIN, pwm3); // LF
+  analogWrite(motor4_PIN, pwm4); // RF
 }
 
 // FLight modes
