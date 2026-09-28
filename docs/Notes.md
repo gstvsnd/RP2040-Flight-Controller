@@ -42,7 +42,7 @@ Acceleration unit: meters/second*2
 ### IMU
     1x MPU 6500/9250/9255 - TBC <!-- Det är vad det står på sensorn... -->
 ### Motors
-    4x 8520 brushed motors
+    4x 1020 brushed motors <!-- the 8520 motors broke down when pushing the propellers on and are small for a drone aproaching 100 grams => 10mm is an upgrade from 8.5mm that doesnt affect the arcitecture -->
 ### Motor controller
     4x AO3400A N-Channel Mosfets for PWM
     4x 100ohm resistors (serial with PWM signals)

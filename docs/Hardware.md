@@ -13,7 +13,7 @@
 * 1x CRSF / ExpressLRS 2.4 GHz transmitter (Radiomaster TX)
 
 ### Motors
-* 4x 8520 brushed DC motors
+* 4x 1020 brushed DC motors
 
 ### Motor Controls
 * 4x AO3400A N-Channel MOSFETs for PWM

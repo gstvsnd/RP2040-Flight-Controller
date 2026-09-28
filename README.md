@@ -13,7 +13,7 @@
   * IMU: **MPU-6500/9250/9255**
   * Radio: **CRSF/ExpressLRS 2.4Ghz**
   * Frame: **Something 3D Printed**
-  * Motors: **8520 Brushed**
+  * Motors: **1020 Brushed DC**
   * Battery: **680mah 95C LiPo**
   * Motorcontroller: **PWM Controlled Transistor Gates**
 
