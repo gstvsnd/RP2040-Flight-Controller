@@ -57,6 +57,9 @@ void setup() {
   digitalWrite(LED_PIN, LOW);
 }
 
+// TODO: 
+// Split prcesses into two threads: one for reading IMU and RC input, one for flight control and motor output.
+
 void loop() {
   // Loop-time (dt) calculation
   unsigned long currentTime = micros();
@@ -87,7 +90,7 @@ void loop() {
 
 
   // ARM drone with SE switch
-  if (input.SE == 2 && input.throttle < 0.05f && crsf.isLinkUp() && battery_voltage > 3.0f) {
+  if (input.SE == 2 && crsf.isLinkUp() && battery_voltage > 3.0f) { //  && input.throttle < 0.05f <- dödar allt med gas över 5%
     digitalWrite(LED_PIN, HIGH);
     // Decide Flight mode
     if (input.SD == 0) {
@@ -113,9 +116,10 @@ void loop() {
     Serial.println("Calibrating IMU...");
     calibrationData = calibrateIMU();
     Serial.println("Calibration Complete!\n");
+    delay(1000); // <-------- Dålig Lösning
     digitalWrite(LED_PIN, LOW);
   }
-  else if (battery_voltage < 3.0f) { // Battery warning
+  else if (battery_voltage < 3.1f) { // Battery warning
     killMotors();
     Serial.println("Battery critical!");
     if (currentMillis - lastBlinkTime >= 150) {
@@ -133,12 +137,26 @@ void loop() {
   if (currentMillis - lastPrintTime >= 2000) { // prints every 2 sec
     lastPrintTime = currentMillis;
     Serial.println("\nDebug data:");
-    Serial.print("Gyro: ");
-    Serial.print(data.gyro.x, 3);
-    Serial.print(", ");
-    Serial.print(data.gyro.y, 3);
-    Serial.print(", ");
-    Serial.print(data.gyro.z, 3);
-    Serial.println();
+    Serial.print("Flight mode: ");
+    if (input.SD == 0) {
+      Serial.println("Acro");
+    }
+    else if (input.SD == 1) {
+      Serial.println("Angle");
+    }
+    else {
+      Serial.println("none");
+    }
+    Serial.print("Battery voltage: ");
+    Serial.print(battery_voltage, 2);
+    Serial.println(" V");
+    Serial.print("Orientation: ");
+    Vector3 orientationDebugg = IMUyprOrientation(data.accel, data.gyro, dt);
+    Serial.print(orientationDebugg.x, 2);
+    Serial.print("y , ");
+    Serial.print(orientationDebugg.y, 2);
+    Serial.print("p , ");
+    Serial.print(orientationDebugg.z, 2);
+    Serial.println("r");
   }//*/
 }
