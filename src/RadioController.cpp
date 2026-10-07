@@ -38,7 +38,7 @@ ControllerInput listen_channels(int THR, int YAW, int PITCH, int ROLL, int SA, i
         input.S2 = (((float)crsf.getChannel(S2) / 500.0f) - 2); // Normalize to [0, 2]
     }
     else {
-        Serial.println("No radiolink");
+        Serial.println("No radiolink"); // ------- ERROR -------
         input.throttle = 0.0f;
         input.yaw = 0.0f;
         input.pitch = 0.0f;

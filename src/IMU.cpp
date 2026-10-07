@@ -119,16 +119,16 @@ Vector3 IMUyprOrientation(const Vector3& accel, const Vector3& gyro, float dt) {
   static float pitch = 0;
   static float roll = 0;
 
-  // Accelerometer angles (rad)
-  float accPitch = atan2(-accel.x, sqrt(accel.y * accel.y + accel.z * accel.z));
-  float accRoll = atan2(accel.y, accel.z);
+  // Accelerometer angles (rad) (Can be broken)
+  float accPitch = -atan2(-accel.x, sqrt(accel.y * accel.y + accel.z * accel.z));
+  float accRoll = atan2(-accel.y, -accel.z);
 
   // Gyroscope rates (rad/s)
   float gyroRoll = gyro.x;
   float gyroPitch = gyro.y;
 
   // <3 Complementary Filter <3
-  float TrustFactor = 0.10; // Accelerometer weight (0.0 -> 1.0)
+  float TrustFactor = 0.1; // Accelerometer weight (0.0 -> 1.0)
   pitch = (1 - TrustFactor) * (pitch + (gyroPitch * dt)) + TrustFactor * accPitch;
   roll  = (1 - TrustFactor) * (roll + (gyroRoll * dt)) + TrustFactor * accRoll;
 

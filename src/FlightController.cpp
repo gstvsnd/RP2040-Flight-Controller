@@ -88,9 +88,9 @@ void flyAcroMode(ControllerInput input, IMUstruct data, float dt) {
   static float pitchInt = 0, pitchPrevErr = 0;
   static float yawInt = 0, yawPrevErr = 0;
 
-  float kp = 0.275f * input.S1; 
-  static float ki = 0.002f;
-  float kd = 0.005f * input.S2;
+  static float kp = 1.00f; 
+  float ki = 0.10f * (input.S1 * input.S1);
+  float kd = 0.002f * (input.S2 * input.S2);
 
   float max_radians_second = 3.1415 * (2.0 / 1.0);
 
